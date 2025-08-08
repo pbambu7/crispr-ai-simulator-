@@ -7,4 +7,4 @@ This project, including its source code, assets, and branding, is copyright © P
 
 All rights reserved. Unauthorized reuse or reproduction is prohibited.
 
-For licensing or usage inquiries, contact: official@crispr-ai-simulator.com
+For licensing or usage inquiries, contact: patiencebambu@gmail.com
