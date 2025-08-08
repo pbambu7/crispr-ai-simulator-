@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/hero_image.png" alt="CRISPR + AI Banner" width="80%">
+</p>
+
 # 🧬 CRISPR + AI Simulator v6
 
 **Creator:** Patience Bambu  
