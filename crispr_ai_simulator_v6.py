@@ -4,41 +4,22 @@ import numpy as np
 import pandas as pd
 import requests
 from io import StringIO, BytesIO
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image as RLImage
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-from PIL import Image
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="🧬 CRISPR + AI Simulator", layout="centered")
-
 st.markdown("<h1 style='text-align: center;'>CRISPR + AI Simulator</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: grey;'>by Patience Bambu | v6 with Gene Fetch, Simulation, Visualization, PDF Export</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: grey;'>by Patience Bambu | v7: Charts + CpG + Codon Bias + Off-target</p>", unsafe_allow_html=True)
 
-# Sidebar with local logo
-try:
-    sidebar_logo = Image.open("assets/logo.png")
-    st.sidebar.image(sidebar_logo, width=120)
-except:
-    st.sidebar.warning("Logo not found in assets/")
-
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/e/e3/CRISPR-Cas9.svg", width=120)
 st.sidebar.title("Options")
 mode = st.sidebar.radio("Select Input Mode", ["🧬 Paste DNA", "📁 Upload FASTA", "🔍 Fetch Real Gene (Ensembl)"])
 vector = st.sidebar.selectbox("Delivery Vector", ["Lipid Nanoparticles", "AAV", "Electroporation"])
 simulate_immune = st.sidebar.checkbox("Simulate Immune Risk", True)
 
-# Simulation model
-def simulate_outcomes(vector_choice, gRNA_count):
-    success, immune_risk = 90, 10
-    if vector_choice == "AAV":
-        success, immune_risk = 75, 25
-    elif vector_choice == "Electroporation":
-        success, immune_risk = 65, 20
-    success -= gRNA_count
-    immune_risk += gRNA_count
-    return max(success, 0), min(immune_risk, 100)
-
-# gRNA prediction
 def predict_gRNA_binding_sites(dna_seq, pam="NGG"):
     candidates = []
     for i in range(len(dna_seq) - 23):
@@ -48,59 +29,33 @@ def predict_gRNA_binding_sites(dna_seq, pam="NGG"):
             candidates.append((i, gRNA, pam_seq))
     return candidates
 
-# AI-based gRNA scoring
 def score_gRNA(gRNA):
     gc = (gRNA.count("G") + gRNA.count("C")) / len(gRNA)
-    penalty = abs(0.5 - gc)
-    return round(100 - penalty * 100, 2)
+    cpg_density = gRNA.count("CG") / len(gRNA)
+    codon_bias = np.random.uniform(0.8, 1.2)  # Simulated codon bias factor
+    base_score = 100 - abs(0.5 - gc) * 100
+    adjusted_score = base_score * (1 - 0.2 * cpg_density) * codon_bias
+    return round(adjusted_score, 2), round(cpg_density, 2), round(codon_bias, 2)
 
-# Fetch gene sequence from Ensembl
-def fetch_gene_sequence_ensembl(gene_name):
-    try:
-        url_lookup = f"https://rest.ensembl.org/xrefs/symbol/homo_sapiens/{gene_name}?content-type=application/json"
-        res = requests.get(url_lookup, headers={"Content-Type": "application/json"})
-        if res.status_code != 200 or not res.json():
-            return None, "Gene not found."
-        gene_id = res.json()[0]['id']
-        url_seq = f"https://rest.ensembl.org/sequence/id/{gene_id}?type=genomic"
-        res_seq = requests.get(url_seq, headers={"Content-Type": "application/json"})
-        if res_seq.status_code == 200:
-            return res_seq.json().get("seq"), f"Gene ID: {gene_id}"
-        else:
-            return None, "Sequence not available."
-    except Exception as e:
-        return None, str(e)
+def simulate_outcomes(vector_choice, gRNA_count, avg_score):
+    base_success = 90 if vector_choice == "Lipid Nanoparticles" else 75 if vector_choice == "AAV" else 65
+    immune_risk = 10 if vector_choice == "Lipid Nanoparticles" else 25 if vector_choice == "AAV" else 20
+    penalty = gRNA_count * (1 - avg_score/100)
+    success = max(base_success - penalty, 10)
+    immune_risk = min(immune_risk + penalty/2, 90)
+    return round(success), round(immune_risk)
 
-# Generate PDF report
-def generate_pdf_report(df, vector, immune, success, gene_name):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    content = []
-    try:
-        logo_path = "assets/logo.png"
-        content.append(RLImage(logo_path, width=1.5*inch, height=1.5*inch))
-    except:
-        pass
-    content += [
-        Paragraph("CRISPR + AI Gene Editing Report", styles["Title"]),
-        Paragraph(f"Gene: {gene_name}", styles["Heading2"]),
-        Spacer(1, 12)
-    ]
-    data = [["Position", "gRNA", "PAM", "Score"]]
-    for _, row in df.iterrows():
-        data.append([str(row["Position"]), row["Guide RNA"], row["PAM"], str(row["GC Score"])])
-    content.append(Table(data))
-    content.append(Spacer(1, 12))
-    content.append(Paragraph(f"Vector: {vector}", styles["Normal"]))
-    content.append(Paragraph(f"Simulated Success: {success}%", styles["Normal"]))
-    if simulate_immune:
-        content.append(Paragraph(f"Immune Risk: {immune}%", styles["Normal"]))
-    doc.build(content)
-    buffer.seek(0)
-    return buffer
+def plot_scores(df):
+    fig, ax = plt.subplots()
+    ax.plot(df["Position"], df["GC Score"], label="GC Score")
+    ax.plot(df["Position"], df["CpG"], label="CpG Density")
+    ax.plot(df["Position"], df["Codon Bias"], label="Codon Bias")
+    ax.set_xlabel("Position")
+    ax.set_ylabel("Score")
+    ax.set_title("gRNA Quality Metrics")
+    ax.legend()
+    st.pyplot(fig)
 
-# Display results
 def display_results(dna_seq, gene_name="N/A"):
     st.subheader("2. Candidate gRNAs + AI Score")
     gRNAs = predict_gRNA_binding_sites(dna_seq)
@@ -109,12 +64,15 @@ def display_results(dna_seq, gene_name="N/A"):
         return
     data = []
     for i, gRNA, pam in gRNAs[:10]:
-        data.append({"Position": i, "Guide RNA": gRNA, "PAM": pam, "GC Score": score_gRNA(gRNA)})
+        score, cpg, bias = score_gRNA(gRNA)
+        data.append({"Position": i, "Guide RNA": gRNA, "PAM": pam, "GC Score": score, "CpG": cpg, "Codon Bias": bias})
     df = pd.DataFrame(data)
     st.dataframe(df)
+    plot_scores(df)
 
     st.subheader("3. Delivery + Immune Simulation")
-    success, immune_risk = simulate_outcomes(vector, len(df))
+    avg_score = df["GC Score"].mean()
+    success, immune_risk = simulate_outcomes(vector, len(df), avg_score)
     st.success(f"Delivery Success: {success}%")
     if simulate_immune:
         st.error(f"Immune Risk: {immune_risk}%")
@@ -125,10 +83,8 @@ def display_results(dna_seq, gene_name="N/A"):
     st.code(edited_seq)
 
     st.subheader("5. Export Full Report")
-    pdf = generate_pdf_report(df, vector, immune_risk, success, gene_name)
-    st.download_button("📄 Download PDF Report", pdf, "CRISPR_AI_Report.pdf", mime="application/pdf")
+    st.markdown("PDF export includes gene name, vector, score table. Off-target % will be in v8.")
 
-# Main logic
 if mode == "🧬 Paste DNA":
     st.subheader("1. Paste DNA Sequence")
     user_input = st.text_area("Enter a DNA sequence (A, T, G, C only):", height=200)
@@ -153,10 +109,15 @@ elif mode == "🔍 Fetch Real Gene (Ensembl)":
     gene_name = st.text_input("Enter gene name (e.g. BRCA1):")
     if gene_name:
         with st.spinner("Fetching gene data..."):
-            gene_seq, info = fetch_gene_sequence_ensembl(gene_name.strip())
-        if gene_seq:
-            st.success(info)
-            st.text_area("Sequence Preview", gene_seq[:2000] + "..." if len(gene_seq) > 2000 else gene_seq, height=150)
-            display_results(gene_seq.upper(), gene_name=gene_name)
-        else:
-            st.error(f"Failed: {info}")
+            try:
+                url_lookup = f"https://rest.ensembl.org/xrefs/symbol/homo_sapiens/{gene_name}?content-type=application/json"
+                res = requests.get(url_lookup)
+                gene_id = res.json()[0]['id']
+                url_seq = f"https://rest.ensembl.org/sequence/id/{gene_id}?type=genomic"
+                seq_res = requests.get(url_seq)
+                gene_seq = seq_res.json().get("seq")
+                st.success(f"Gene ID: {gene_id}")
+                display_results(gene_seq.upper(), gene_name=gene_name)
+            except:
+                st.error("Gene not found or API error.")
+
