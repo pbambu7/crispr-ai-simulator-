@@ -1,7 +1,0 @@
-streamlit
-biopython
-pandas
-matplotlib
-reportlab
-scikit-learn
-requests
