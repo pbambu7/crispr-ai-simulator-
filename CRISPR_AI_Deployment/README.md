@@ -1,17 +1,41 @@
-# CRISPR + AI Simulator
+# 🧬 CRISPR + AI Simulator
 
-This is a Streamlit web app that allows researchers and students to simulate gene editing using CRISPR combined with AI. It supports:
+A futuristic bioinformatics platform that simulates CRISPR gene editing experiments using AI to predict editing outcomes, delivery vector effectiveness, and immune responses — all in one powerful interface.
 
-- Real gene fetching from Ensembl
-- gRNA prediction and scoring
-- Delivery vector & immune risk simulation
-- Exportable PDF reports
+![banner](https://your-custom-banner-image-link.com) <!-- optional banner image -->
 
-## How to Run
+## 🌟 Overview
+
+This project combines **CRISPR gene editing logic** with **AI-driven analysis** to simulate real-world experiments for curing genetic and chronic diseases. Ideal for researchers, biotech students, and innovators exploring next-gen gene therapy.
+
+## 🧠 Features
+
+- 🧬 CRISPR Editor with gRNA targeting
+- 🤖 DeepCRISPR scoring model integration
+- 🛡️ Immune response prediction module
+- 🚚 Delivery vector simulation (LNPs, AAV, etc.)
+- 📊 Real-time result visualization and scoring
+- ☁️ Streamlit-powered web interface
+
+## 🔧 Tech Stack
+
+- **Python 3.10+**
+- `Streamlit`
+- `Pandas`, `NumPy`
+- `matplotlib`, `plotly`
+- Custom DeepCRISPR scoring logic
+- Optional: Hugging Face / AlphaFold integration (planned)
+
+## 🚀 Getting Started
 
 ```bash
-pip install -r requirements.txt
-streamlit run crispr_editor_app_v5.py
-```
+# Clone repo
+git clone https://github.com/pbambu7/crispr-ai-simulator-.git
+cd crispr-ai-simulator-
 
-Created by Patience Bambu.
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the app
+streamlit run crispr_editor_app_v5.py
+
