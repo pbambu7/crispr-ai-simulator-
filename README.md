@@ -22,9 +22,4 @@ MIT License – feel free to fork, contribute, or deploy for education & researc
 
 ---
 
-Would you like me to:
-- **Add it to your repo directly**?
-- **Turn it into a visual README with icons and cover banner**?
-- Or both?
 
-Let me know 🔥
