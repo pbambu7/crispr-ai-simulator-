@@ -120,4 +120,3 @@ elif mode == "🔍 Fetch Real Gene (Ensembl)":
                 display_results(gene_seq.upper(), gene_name=gene_name)
             except:
                 st.error("Gene not found or API error.")
-
