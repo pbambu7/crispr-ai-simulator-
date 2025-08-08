@@ -1,22 +1,27 @@
-
 import streamlit as st
 from Bio import SeqIO
 import numpy as np
 import pandas as pd
 import requests
 from io import StringIO, BytesIO
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
+from PIL import Image
 
 st.set_page_config(page_title="🧬 CRISPR + AI Simulator", layout="centered")
 
 st.markdown("<h1 style='text-align: center;'>CRISPR + AI Simulator</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: grey;'>by Patience Bambu | v6 with Gene Fetch, Simulation, Visualization, PDF Export</p>", unsafe_allow_html=True)
 
-# Sidebar
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/e/e3/CRISPR-Cas9.svg", width=120)
+# Sidebar with local logo
+try:
+    sidebar_logo = Image.open("assets/logo.png")
+    st.sidebar.image(sidebar_logo, width=120)
+except:
+    st.sidebar.warning("Logo not found in assets/")
+
 st.sidebar.title("Options")
 mode = st.sidebar.radio("Select Input Mode", ["🧬 Paste DNA", "📁 Upload FASTA", "🔍 Fetch Real Gene (Ensembl)"])
 vector = st.sidebar.selectbox("Delivery Vector", ["Lipid Nanoparticles", "AAV", "Electroporation"])
@@ -73,8 +78,8 @@ def generate_pdf_report(df, vector, immune, success, gene_name):
     styles = getSampleStyleSheet()
     content = []
     try:
-        logo = "assets/logo.png"
-        content.append(Image(logo, width=1.5*inch, height=1.5*inch))
+        logo_path = "assets/logo.png"
+        content.append(RLImage(logo_path, width=1.5*inch, height=1.5*inch))
     except:
         pass
     content += [
